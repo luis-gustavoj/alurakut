@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   AlurakutMenu,
@@ -34,19 +34,35 @@ const ProfileSidebar = ({ githubUser }) => {
   );
 };
 
+const ProfileRelationsBox = ({ data, title }) => {
+  return (
+    <ProfileRelationsBoxWrapper>
+      <h2 className="smallTitle">
+        {title} ({data.length})
+      </h2>
+      <ul>
+        {data.slice(0, 6).map((currentItem) => {
+          return (
+            <li key={currentItem.id}>
+              <a href={`/users/${currentItem.login}`}>
+                <img
+                  src={`https://github.com/${currentItem.login}.png`}
+                  alt={`${currentItem.login} avatar`}
+                />
+                <span>{currentItem.login}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </ProfileRelationsBoxWrapper>
+  );
+};
+
 export default function Home() {
   const githubUser = "luis-gustavoj";
-  const favoriteRelations = [
-    "omariosouto",
-    "juunegreiros",
-    "peas",
-    "diego3g",
-    "filipedeschamps",
-    "felipefialho",
-    "placeholder",
-    "placeholder",
-    "placeholder",
-  ];
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
   const [communities, setCommunities] = useState([
     {
       id: "231321321312",
@@ -55,6 +71,35 @@ export default function Home() {
       link: "https://alura.com.br",
     },
   ]);
+
+  const fetchFollowersData = async () => {
+    try {
+      const data = await fetch(
+        `https://api.github.com/users/${githubUser}/followers`
+      );
+      const parsedData = await data.json();
+      setFollowers(parsedData);
+    } catch (error) {
+      throw new Error(`Aconteceu algum erro :( ${error}`);
+    }
+  };
+
+  const fetchFollowingData = async () => {
+    try {
+      const data = await fetch(
+        `https://api.github.com/users/${githubUser}/following`
+      );
+      const parsedData = await data.json();
+      setFollowing(parsedData);
+    } catch (error) {
+      throw new Error(`Aconteceu algum erro :( ${error}`);
+    }
+  };
+
+  useEffect(() => {
+    fetchFollowersData();
+    fetchFollowingData();
+  }, []);
 
   return (
     <>
@@ -130,26 +175,8 @@ export default function Home() {
               })}
             </ul>
           </ProfileRelationsBoxWrapper>
-          <ProfileRelationsBoxWrapper>
-            <h2 className="smallTitle">
-              Pessoas da comunidade ({favoriteRelations.length})
-            </h2>
-            <ul>
-              {favoriteRelations.slice(0, 6).map((favPerson) => {
-                return (
-                  <li key={favPerson}>
-                    <a href={`/users/${favPerson}`}>
-                      <img
-                        src={`https://github.com/${favPerson}.png`}
-                        alt={`${favPerson} avatar`}
-                      />
-                      <span>{favPerson}</span>
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </ProfileRelationsBoxWrapper>
+          <ProfileRelationsBox data={followers} title="Seguidores" />
+          <ProfileRelationsBox data={following} title="Pessoas da comunidade" />
         </div>
       </MainGrid>
     </>
