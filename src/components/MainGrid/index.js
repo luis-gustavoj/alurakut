@@ -1,8 +1,6 @@
 import styled from "styled-components";
 
 export const MainGrid = styled.main`
-  display: grid;
-
   width: 100%;
   max-width: 500px;
 
@@ -16,9 +14,6 @@ export const MainGrid = styled.main`
     @media (min-width: 860px) {
       display: block;
     }
-  }
-
-  .profileAvatar {
   }
 
   @media (min-width: 860px) {
