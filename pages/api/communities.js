@@ -5,15 +5,26 @@ export default async function requestReceiver(request, response) {
     const TOKEN = process.env.DATO_TOKEN;
     const client = new SiteClient(TOKEN);
 
-    const communityData = await client.items.create({
-      itemType: "968444",
-      ...request.body,
-    });
+    if (request.headers.type === "community") {
+      const communityData = await client.items.create({
+        itemType: "968444",
+        ...request.body,
+      });
 
-    console.log(communityData);
+      response.json({
+        registerSucceeded: communityData,
+      });
+    }
 
-    response.json({
-      registerSucceeded: communityData,
-    });
+    if (request.headers.type === "scrap") {
+      const scrapData = await client.items.create({
+        itemType: "975109",
+        ...request.body,
+      });
+
+      response.json({
+        registerSucceeded: scrapData,
+      });
+    }
   }
 }

@@ -1,6 +1,10 @@
 import Image from "next/image";
 
+import styled from "styled-components";
+
 import { useEffect, useState } from "react";
+import { format, parseISO } from "date-fns";
+import ptBR from "date-fns/locale/pt-BR";
 
 import {
   AlurakutMenu,
@@ -59,11 +63,44 @@ const ProfileRelationsBox = ({ data, title }) => {
   );
 };
 
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 14px;
+`;
+
+const ScrapBox = styled(Box)`
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+
+  span {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    display: flex;
+
+    border-bottom: 1px solid #f4f4f4;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+
+    color: #5a5a5a;
+    font-size: 0.8rem;
+
+    h1 {
+      font-size: 1rem;
+      font-weight: 400;
+      color: #000;
+    }
+  }
+`;
+
 export default function Home() {
   const githubUser = "luis-gustavoj";
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [communities, setCommunities] = useState([]);
+  const [scraps, setScraps] = useState([]);
+  const [selectedOption, setSelectedOption] = useState(true);
 
   const fetchFollowersData = async () => {
     try {
@@ -105,12 +142,18 @@ export default function Home() {
           imageUrl
           creatorslug
         }
+        allScraps {
+          senderSlug
+          description
+          id
+          createdDate
+        }
       }`,
       }),
     })
       .then((response) => response.json())
       .then((parsedResponse) => {
-        console.log(parsedResponse);
+        setScraps(parsedResponse.data.allScraps);
         setCommunities(parsedResponse.data.allCommunities);
       });
   };
@@ -131,53 +174,131 @@ export default function Home() {
         <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
           <Box>
             <h1 className="title">Bem vindo(a)</h1>
-            <OrkutNostalgicIconSet confiavel={3} legal={2} sexy={0} />
+            <OrkutNostalgicIconSet
+              confiavel={3}
+              legal={2}
+              sexy={0}
+              recados={scraps.length}
+            />
           </Box>
           <Box>
             <h2 className="subTitle">O que você deseja fazer?</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
+            <ButtonContainer>
+              <button
+                onClick={() => {
+                  setSelectedOption(true);
+                }}
+              >
+                Criar uma comunidade
+              </button>
+              <button onClick={() => setSelectedOption(false)}>
+                Deixar um recado
+              </button>
+            </ButtonContainer>
+            {selectedOption ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
 
-                const community = {
-                  title: e.target.title.value,
-                  imageUrl: e.target.image.value,
-                  creatorslug: githubUser,
-                };
+                  const community = {
+                    title: e.target.title.value,
+                    imageUrl: e.target.image.value,
+                    creatorslug: githubUser,
+                  };
 
-                fetch("/api/communities", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify(community),
-                }).then(async (res) => {
-                  const data = await res.json();
-                  const updatedCommunties = [
-                    ...communities,
-                    data.registerSucceeded,
-                  ];
-                  setCommunities(updatedCommunties);
-                });
-              }}
-            >
-              <div>
-                <input
-                  placeholder="Qual o nome de sua comunidade?"
-                  name="title"
-                  aria-label="Qual o nome de sua comunidade?"
-                  type="text"
-                />
-              </div>
-              <div>
-                <input
-                  placeholder="Qual o URL de sua foto de capa?"
-                  name="image"
-                  aria-label="Qual o URL de sua foto de capa?"
-                />
-              </div>
-              <button>Criar comunidade</button>
-            </form>
+                  fetch("/api/communities", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      type: "community",
+                    },
+                    body: JSON.stringify(community),
+                  }).then(async (res) => {
+                    const data = await res.json();
+                    const updatedCommunities = [
+                      data.registerSucceeded,
+                      ...communities,
+                    ];
+                    setCommunities(updatedCommunities);
+                  });
+                }}
+              >
+                <div>
+                  <input
+                    placeholder="Qual o nome de sua comunidade?"
+                    name="title"
+                    aria-label="Qual o nome de sua comunidade?"
+                    type="text"
+                  />
+                </div>
+                <div>
+                  <input
+                    placeholder="Qual o URL de sua foto de capa?"
+                    name="image"
+                    aria-label="Qual o URL de sua foto de capa?"
+                  />
+                </div>
+                <button>Criar comunidade</button>
+              </form>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+
+                  const scrap = {
+                    senderSlug: e.target.scrapSenderName.value,
+                    description: e.target.scrapDescription.value,
+                    createdDate: new Date(),
+                  };
+
+                  fetch("/api/communities", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      type: "scrap",
+                    },
+                    body: JSON.stringify(scrap),
+                  }).then(async (res) => {
+                    const data = await res.json();
+                    const updatedScraps = [data.registerSucceeded, ...scraps];
+                    setScraps(updatedScraps);
+                  });
+                }}
+              >
+                <div>
+                  <input
+                    placeholder="Qual o seu nome?"
+                    name="scrapSenderName"
+                    aria-label="Qual o seu nome?"
+                    type="text"
+                  />
+                </div>
+                <div>
+                  <input
+                    placeholder="Digite o seu recado"
+                    name="scrapDescription"
+                    aria-label="Digite o seu recado"
+                  />
+                </div>
+                <button>Deixar recado</button>
+              </form>
+            )}
+          </Box>
+          <Box>
+            <h2 className="subTitle">Recados</h2>
+            {scraps.slice(0, 8).map((scrap) => {
+              return (
+                <ScrapBox key={scrap.id}>
+                  <span>
+                    <h1>{scrap.senderSlug}</h1>
+                    {format(parseISO(scrap.createdDate), "PPpp", {
+                      locale: ptBR,
+                    })}
+                  </span>
+                  <p>{scrap.description}</p>
+                </ScrapBox>
+              );
+            })}
           </Box>
         </div>
         <div
