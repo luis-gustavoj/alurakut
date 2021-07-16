@@ -92,6 +92,12 @@ const ScrapBox = styled(Box)`
       color: #000;
     }
   }
+
+  p {
+    max-width: 550px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 export default function Home() {
@@ -246,7 +252,9 @@ export default function Home() {
                   e.preventDefault();
 
                   const scrap = {
-                    senderSlug: e.target.scrapSenderName.value,
+                    senderSlug: e.target.scrapSenderName.value
+                      ? e.target.scrapSenderName.value
+                      : "Anônimo",
                     description: e.target.scrapDescription.value,
                     createdDate: new Date(),
                   };
